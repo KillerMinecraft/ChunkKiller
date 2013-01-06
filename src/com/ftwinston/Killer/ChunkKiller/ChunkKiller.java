@@ -1,24 +1,16 @@
 package com.ftwinston.Killer.ChunkKiller;
 
+import java.util.Collections;
 import java.util.List;
 
 import com.ftwinston.Killer.GameMode;
 import com.ftwinston.Killer.Helper;
 import com.ftwinston.Killer.Option;
-import com.ftwinston.Killer.PlayerFilter;
 
-import org.bukkit.ChatColor;
+import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.block.Action;
-import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.PlayerInventory;
-import org.bukkit.inventory.meta.LeatherArmorMeta;
-import org.bukkit.Material;
 
 public class ChunkKiller extends GameMode
 {
@@ -54,6 +46,7 @@ public class ChunkKiller extends GameMode
 	public boolean isLocationProtected(Location l)
 	{
 		// ah crap, this ought to have a player parameter?
+		return false;
 	}
 	
 	@Override
@@ -69,15 +62,30 @@ public class ChunkKiller extends GameMode
 		return Helper.getSafeSpawnLocationNear(getWorld(0).getSpawnLocation());
 	}
 	
+	String[] playerIndices;
+	int numPlayerChunkRows;
+	
 	@Override
 	public void gameStarted(boolean isNewWorlds)
 	{
 		if ( !isNewWorlds )
 			; // this ... wouldn't work. Game mode ought to have a function for whether this is allowed at all??
 		
+		// get a list of all players, in a random order
 		List<Player> players = getOnlinePlayers();
+		Collections.shuffle(players);
 		
-		// sort this list randomly, then make a new array of player names, for handling the player ORDER (for where their chunks should go, etc)
+		// set up an array of player names, so we can easily determine the index (and thus the chunk) of any given player
+		playerIndices = new String[players.size()];
+		for ( int i=0; i<playerIndices.length; i++ )
+			playerIndices[i] = players.get(i).getName();
+		
+		numPlayerChunkRows = (int)Math.ceil(Math.sqrt(playerIndices.length));
+	}
+	
+	public Chunk getChunkForPlayer(Player player)
+	{
+		// use their name, get the index, then determine the chunk by means of numPlayerChunkRows 
 	}
 	
 	@Override
