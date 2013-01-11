@@ -6,12 +6,14 @@ import java.util.Random;
 
 import com.ftwinston.Killer.GameMode;
 import com.ftwinston.Killer.Option;
+import com.ftwinston.Killer.WorldConfig;
 
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.World.Environment;
+import org.bukkit.WorldType;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.generator.ChunkGenerator;
@@ -47,9 +49,9 @@ public class ChunkKiller extends GameMode
 	public boolean teamAllocationIsSecret() { return false; }
 	
 	@Override
-	public boolean isLocationProtected(Location l)
+	public boolean isLocationProtected(Location l, Player p)
 	{
-		// ah crap, this ought to have a player parameter?
+		// true if i'm a slave and this is my master's chunk, or if its nobody's chunk and the warm-up period hasn't expired
 		return false;
 	}
 	
@@ -63,26 +65,25 @@ public class ChunkKiller extends GameMode
 	public Environment[] getWorldsToGenerate() { return new Environment[] { Environment.NORMAL }; }
 	
 	@Override
-	public ChunkGenerator getCustomChunkGenerator(int worldNumber)
+	public void beforeWorldGeneration(int worldNumber, WorldConfig world)
 	{
-		// really should have a new method to be called here, beforeWorldGeneration(int worldNumber)
-			// get a list of all players, in a random order
-			List<Player> players = getOnlinePlayers();
-			Collections.shuffle(players);
-			
-			// set up an array of player names, so we can easily determine the index (and thus the chunk) of any given player
-			playerIndices = new String[players.size()];
-			for ( int i=0; i<playerIndices.length; i++ )
-				playerIndices[i] = players.get(i).getName();
-			
-			chunkRows = (int)Math.ceil(Math.sqrt(playerIndices.length));
-			chunkCols = (int)Math.ceil((double)playerIndices.length/chunkRows);
-			chunksOnLastRow = playerIndices.length % chunkRows;
-			if ( chunksOnLastRow == 0 )
-				chunksOnLastRow = chunkCols;
-			
+		// get a list of all players, in a random order
+		List<Player> players = getOnlinePlayers();
+		Collections.shuffle(players);
 		
-		return new PlayerChunkGenerator();
+		// set up an array of player names, so we can easily determine the index (and thus the chunk) of any given player
+		playerIndices = new String[players.size()];
+		for ( int i=0; i<playerIndices.length; i++ )
+			playerIndices[i] = players.get(i).getName();
+		
+		chunkRows = (int)Math.ceil(Math.sqrt(playerIndices.length));
+		chunkCols = (int)Math.ceil((double)playerIndices.length/chunkRows);
+		chunksOnLastRow = playerIndices.length % chunkRows;
+		if ( chunksOnLastRow == 0 )
+			chunksOnLastRow = chunkCols;
+		
+		world.setWorldType(WorldType.FLAT);
+		world.setGenerator(new PlayerChunkGenerator());
 	}
 	
 	public class PlayerChunkGenerator extends ChunkGenerator
