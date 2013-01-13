@@ -10,6 +10,8 @@ import org.bukkit.TreeType;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.CreatureSpawner;
+import org.bukkit.entity.EntityType;
 import org.bukkit.generator.BlockPopulator;
 import org.bukkit.generator.ChunkGenerator;
 
@@ -78,17 +80,26 @@ public class PlayerChunkGenerator extends ChunkGenerator
 		return x < chunkMinX || x > chunkMaxX || z < chunkMinZ || z > chunkMaxZ || x % ChunkKiller.chunkSpacing != 0 || z % ChunkKiller.chunkSpacing != 0 || (x == chunkMaxX && z > lastRowChunk);
 	}
 	
-	private Block getRandomBlock(Chunk c, Random r, int yMin, int yMax)
+	private int getRandomCoord(Random r, int distanceFromEdge)
+	{
+		int i = distanceFromEdge + r.nextInt(15 - distanceFromEdge - distanceFromEdge);
+		if ( i >= ChunkKiller.chunkCoreX )
+			i++;
+		return i;
+	}
+	
+	private int getIntInRange(Random r, int min, int max)
+	{
+		return min + r.nextInt(max-min+1);
+	}
+	
+	private Block getRandomBlock(Chunk c, Random r, int yMin, int yMax, int distanceFromEdge)
 	{
 		Block b = null;
 		for ( int i=0; i<3; i++ )
 		{
-			int x = 1 + r.nextInt(13), z = 1 + r.nextInt(13);
-			if ( x >= ChunkKiller.chunkCoreX )
-				x++;
-			if ( z >= ChunkKiller.chunkCoreZ )
-				z++;
-			b = c.getBlock(x, yMin + r.nextInt(yMax-yMin+1), z);
+			int x = getRandomCoord(r, distanceFromEdge), z = getRandomCoord(r, distanceFromEdge);
+			b = c.getBlock(x, getIntInRange(r, yMin, yMax), z);
 			if ( b.getType() == Material.STONE )
 				break;
 		}
@@ -105,13 +116,43 @@ public class PlayerChunkGenerator extends ChunkGenerator
 			
 			r.setSeed(w.getSeed()); // ensure each chunk generates the same
 			
-			for ( int y=0;y<=ChunkKiller.maxCoreY; y++ )
-				c.getBlock(ChunkKiller.chunkCoreX, y, ChunkKiller.chunkCoreZ).setTypeId(ChunkKiller.coreMaterial);
-			
-			int num = 5; // 3 clumps of gravel, each 3x3
+			// lava
+			int num = 4, bx, by, bz;
 			for ( int i=0; i<num; i++ )
 			{
-				Block b = getRandomBlock(c, r, 40, 62);
+				int hSize = r.nextInt(3), vSize = r.nextInt(3);
+				bx = getRandomCoord(r, hSize+1); by = getIntInRange(r, 2, 44); bz = getRandomCoord(r, hSize+1);
+				for ( int x=bx-hSize; x<=bx+(hSize == 0 ? 1 : hSize); x++ )
+					for ( int z=bz-hSize; z<=bz+(hSize == 0 ? 1 : hSize); z++ )
+						for ( int y=by; y<=by+vSize; y++)
+							c.getBlock(x, y, z).setType(Material.LAVA);
+			}
+			
+			// spider spawner, skeleton spawner
+			bx = getRandomCoord(r, 3); by = getIntInRange(r, 2, 44); bz = getRandomCoord(r, 3);
+			for ( int x=bx-2; x<=bx+2; x++ )
+				for ( int z=bz-2; z<=bz+2; z++ )
+					for ( int y=by; y<=by+2; y++)
+						c.getBlock(x, y, z).setType(Material.AIR);
+			Block b = c.getBlock(bx, by, bz);
+			b.setType(Material.MOB_SPAWNER);
+			CreatureSpawner spawner = (CreatureSpawner)b.getState();
+			spawner.setSpawnedType(EntityType.SPIDER);
+			
+			bx = getRandomCoord(r, 3); by = getIntInRange(r, 2, 44); bz = getRandomCoord(r, 3);
+			for ( int x=bx-2; x<=bx+2; x++ )
+				for ( int z=bz-2; z<=bz+2; z++ )
+					for ( int y=by; y<=by+2; y++)
+						c.getBlock(x, y, z).setType(Material.AIR);
+			b = c.getBlock(bx, by, bz);
+			b.setType(Material.MOB_SPAWNER);
+			spawner = (CreatureSpawner)b.getState();
+			spawner.setSpawnedType(EntityType.SKELETON);
+			
+			num = 5; // 3 clumps of gravel, each 3x3
+			for ( int i=0; i<num; i++ )
+			{
+				b = getRandomBlock(c, r, 40, 62, 2);
 				for ( int j=0; j<3; j++ )
 				{
 					b.setType(Material.GRAVEL);
@@ -130,7 +171,7 @@ public class PlayerChunkGenerator extends ChunkGenerator
 			num = r.nextInt(4) + 2; // 2-5 veins of 2-4 diamonds
 			for ( int i=0; i<num; i++ )
 			{
-				Block b = getRandomBlock(c, r, 2, 20);
+				b = getRandomBlock(c, r, 2, 20, 1);
 				b.setType(Material.DIAMOND_ORE);
 				if ( r.nextInt(3) != 1 )	
 					b.getRelative(r.nextBoolean() ? BlockFace.NORTH : BlockFace.SOUTH).setType(Material.DIAMOND_ORE);
@@ -143,7 +184,7 @@ public class PlayerChunkGenerator extends ChunkGenerator
 			num = r.nextInt(3) + 5; // 5-7 veins of up to 8 iron
 			for ( int i=0; i<num; i++ )
 			{
-				Block b = getRandomBlock(c, r, 20, 44);
+				b = getRandomBlock(c, r, 20, 44, 1);
 				BlockFace f1 = r.nextBoolean() ? BlockFace.NORTH : BlockFace.SOUTH, f2 = r.nextBoolean() ? BlockFace.EAST : BlockFace.WEST;
 				for ( int j=0; j<2; j++ )					
 				{
@@ -161,7 +202,7 @@ public class PlayerChunkGenerator extends ChunkGenerator
 			num = r.nextInt(4) + 5; // 5-8 veins of up to 8 coal
 			for ( int i=0; i<num; i++ )
 			{
-				Block b = getRandomBlock(c, r, 32, 48);
+				b = getRandomBlock(c, r, 32, 48, 1);
 				BlockFace f1 = r.nextBoolean() ? BlockFace.NORTH : BlockFace.SOUTH, f2 = r.nextBoolean() ? BlockFace.EAST : BlockFace.WEST;
 				for ( int j=0; j<2; j++ )					
 				{
@@ -179,7 +220,7 @@ public class PlayerChunkGenerator extends ChunkGenerator
 			num = r.nextInt(4) + 2; // 2-5 veins of up to 8 redstone
 			for ( int i=0; i<num; i++ )
 			{
-				Block b = getRandomBlock(c, r, 32, 48);
+				b = getRandomBlock(c, r, 32, 48, 1);
 				BlockFace f1 = r.nextBoolean() ? BlockFace.NORTH : BlockFace.SOUTH, f2 = r.nextBoolean() ? BlockFace.EAST : BlockFace.WEST;
 				for ( int j=0; j<2; j++ )					
 				{
@@ -199,14 +240,13 @@ public class PlayerChunkGenerator extends ChunkGenerator
 			w.generateTree(c.getBlock(1 + r.nextInt(7), ChunkKiller.maxCoreY+1, 9 + r.nextInt(6)).getLocation(), TreeType.REDWOOD);
 			
 			// water in the remaining corner .. with some wheat growing next to it, for the chickens
-			
 			Block water = c.getBlock(10 + r.nextInt(4), ChunkKiller.maxCoreY, 10 + r.nextInt(4));
-			water.setType(Material.WATER);
-			water.getRelative(1, 0, 0).setType(Material.WATER);
-			water.getRelative(0, 0, 1).setType(Material.WATER);
-			water.getRelative(1, 0, 1).setType(Material.WATER);
+			water.setType(Material.STATIONARY_WATER);
+			water.getRelative(1, 0, 0).setType(Material.STATIONARY_WATER);
+			water.getRelative(0, 0, 1).setType(Material.STATIONARY_WATER);
+			water.getRelative(1, 0, 1).setType(Material.STATIONARY_WATER);
 			
-			Block b = water.getRelative(2, 0, 0); b.setType(Material.SOIL); b.setData((byte)0x8);
+			b = water.getRelative(2, 0, 0); b.setType(Material.SOIL); b.setData((byte)0x8);
 			b = water.getRelative(2, 0, 1); b.setType(Material.SOIL); b.setData((byte)0x8);
 			b = water.getRelative(0, 0, 2); b.setType(Material.SOIL); b.setData((byte)0x8);
 			b = water.getRelative(1, 0, 2); b.setType(Material.SOIL); b.setData((byte)0x8);
@@ -218,6 +258,9 @@ public class PlayerChunkGenerator extends ChunkGenerator
 			b = water.getRelative(1, 1, 2); b.setType(Material.CROPS); b.setData((byte)r.nextInt(7));
 			b = water.getRelative(2, 1, 2); b.setType(Material.CROPS); b.setData((byte)0x7);
 			
+			// the core
+			for ( int y=0;y<=ChunkKiller.maxCoreY; y++ )
+				c.getBlock(ChunkKiller.chunkCoreX, y, ChunkKiller.chunkCoreZ).setTypeId(ChunkKiller.coreMaterial);
 			
 			// chickens, for food & feathers
 			w.spawnEntity(c.getBlock(9, ChunkKiller.maxCoreY + 1, 14).getLocation(), EntityType.CHICKEN);
