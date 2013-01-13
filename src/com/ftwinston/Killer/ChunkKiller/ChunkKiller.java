@@ -387,6 +387,7 @@ public class ChunkKiller extends GameMode
 			return;
 		
 		// make them be a spectator
+		Helper.makeSpectator(getGame(), player);
 	}
 	
 	@Override
