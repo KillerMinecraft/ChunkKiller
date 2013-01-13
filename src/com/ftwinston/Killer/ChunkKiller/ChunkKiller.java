@@ -1,12 +1,9 @@
 package com.ftwinston.Killer.ChunkKiller;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-
-import com.ftwinston.Killer.GameMode;
-import com.ftwinston.Killer.Option;
-import com.ftwinston.Killer.WorldConfig;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
@@ -22,7 +19,12 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.generator.BlockPopulator;
 import org.bukkit.generator.ChunkGenerator;
+
+import com.ftwinston.Killer.GameMode;
+import com.ftwinston.Killer.Option;
+import com.ftwinston.Killer.WorldConfig;
 
 public class ChunkKiller extends GameMode
 {
@@ -31,7 +33,8 @@ public class ChunkKiller extends GameMode
 	String[] playerIndices;
 	boolean[] chunksStillAlive;
 	int[] slaveMasters;
-	int chunkRows, chunkCols, chunksOnLastRow, chunkSpacing = 3, maxCoreY = 64;
+	int chunkRows, chunkCols, chunksOnLastRow;
+	final int chunkSpacing = 3, maxCoreY = 64, chunkCoreX = 8, chunkCoreZ = 8;
 	
 	int coreMaterial = Material.EMERALD_BLOCK.getId();
 	
@@ -134,9 +137,17 @@ public class ChunkKiller extends GameMode
 		}
 		
 		@Override
+		public List<BlockPopulator> getDefaultPopulators(World world)
+		{
+			List<BlockPopulator> list = new ArrayList<BlockPopulator>();
+			list.add(new OrePopulator());
+			return list;
+		}
+		
+		@Override
 		public byte[][] generateBlockSections(World world, Random random, int x, int z, BiomeGrid biomes)
 		{
-			if ( x < chunkMinX || x > chunkMaxX || z < chunkMinZ || z > chunkMaxZ || x % chunkSpacing != 0 || z % chunkSpacing != 0 || (x == chunkMaxX && z > lastRowChunk) )
+			if ( isEmptyChunk(x, z) )
 				return new byte[1][];
 			
 			// a player chunk goes here
@@ -174,6 +185,126 @@ public class ChunkKiller extends GameMode
 	        }
 	        result[y >> 4][((y & 0xF) << 8) | (z << 4) | x] = blkid;
 	    }
+		
+		private boolean isEmptyChunk(int x, int z)
+		{
+			return x < chunkMinX || x > chunkMaxX || z < chunkMinZ || z > chunkMaxZ || x % chunkSpacing != 0 || z % chunkSpacing != 0 || (x == chunkMaxX && z > lastRowChunk);
+		}
+		
+		private Block getRandomBlock(Chunk c, Random r, int yMin, int yMax)
+		{
+			Block b = null;
+			for ( int i=0; i<3; i++ )
+			{
+				int x = 1 + r.nextInt(13), z = 1 + r.nextInt(13);
+				if ( x >= chunkCoreX )
+					x++;
+				if ( z >= chunkCoreZ )
+					z++;
+				b = c.getBlock(x, yMin + r.nextInt(yMax-yMin+1), z);
+				if ( b.getType() == Material.STONE )
+					break;
+			}
+			return b;
+		}
+		
+		public class OrePopulator extends BlockPopulator
+		{
+			@Override
+			public void populate(World w, Random r, Chunk c)
+			{
+				if ( isEmptyChunk(c.getX(), c.getZ()) )
+					return;
+				
+				r.setSeed(w.getSeed()); // ensure each chunk generates the same
+				
+				int num = 3; // 3 clumps of gravel, each 3x3
+				for ( int i=0; i<num; i++ )
+				{
+					Block b = getRandomBlock(c, r, 45, 63);
+					for ( int j=0; j<3; j++ )
+					{
+						b.setType(Material.GRAVEL);
+						b.getRelative(BlockFace.NORTH).setType(Material.GRAVEL);
+						b.getRelative(BlockFace.EAST).setType(Material.GRAVEL);
+						b.getRelative(BlockFace.SOUTH).setType(Material.GRAVEL);
+						b.getRelative(BlockFace.WEST).setType(Material.GRAVEL);
+						b.getRelative(BlockFace.NORTH_EAST).setType(Material.GRAVEL);
+						b.getRelative(BlockFace.NORTH_WEST).setType(Material.GRAVEL);
+						b.getRelative(BlockFace.SOUTH_EAST).setType(Material.GRAVEL);
+						b.getRelative(BlockFace.SOUTH_WEST).setType(Material.GRAVEL);
+						b = b.getRelative(BlockFace.DOWN);
+					}
+				}
+				
+				num = r.nextInt(4) + 2; // 2-5 veins of 2-4 diamonds
+				for ( int i=0; i<num; i++ )
+				{
+					Block b = getRandomBlock(c, r, 2, 20);
+					b.setType(Material.DIAMOND_ORE);
+					if ( r.nextInt(3) != 1 )	
+						b.getRelative(r.nextBoolean() ? BlockFace.NORTH : BlockFace.SOUTH).setType(Material.DIAMOND_ORE);
+					if ( r.nextInt(3) != 1 )						
+						b.getRelative(r.nextBoolean() ? BlockFace.EAST : BlockFace.WEST).setType(Material.DIAMOND_ORE);
+					if ( r.nextInt(3) != 1 )						
+						b.getRelative(r.nextBoolean() ? BlockFace.UP : BlockFace.DOWN).setType(Material.DIAMOND_ORE);
+				}
+				
+				num = r.nextInt(3) + 3; // 3-5 veins of up to 8 iron
+				for ( int i=0; i<num; i++ )
+				{
+					Block b = getRandomBlock(c, r, 20, 44);
+					BlockFace f1 = r.nextBoolean() ? BlockFace.NORTH : BlockFace.SOUTH, f2 = r.nextBoolean() ? BlockFace.EAST : BlockFace.WEST;
+					for ( int j=0; j<2; j++ )					
+					{
+						b.setType(Material.IRON_ORE);
+						if ( r.nextInt(7) != 1 )	
+							b.getRelative(f1).setType(Material.IRON_ORE);
+						if ( r.nextInt(7) != 1 )						
+							b.getRelative(f2).setType(Material.IRON_ORE);
+						if ( r.nextInt(7) != 1 )						
+							b.getRelative(f1).getRelative(f2).setType(Material.IRON_ORE);
+						b = b.getRelative(r.nextBoolean() ? BlockFace.UP : BlockFace.DOWN);
+					}
+				}
+				
+				num = r.nextInt(4) + 3; // 3-6 veins of up to 8 coal
+				for ( int i=0; i<num; i++ )
+				{
+					Block b = getRandomBlock(c, r, 32, 48);
+					BlockFace f1 = r.nextBoolean() ? BlockFace.NORTH : BlockFace.SOUTH, f2 = r.nextBoolean() ? BlockFace.EAST : BlockFace.WEST;
+					for ( int j=0; j<2; j++ )					
+					{
+						b.setType(Material.COAL_ORE);
+						if ( r.nextInt(7) != 1 )	
+							b.getRelative(f1).setType(Material.COAL_ORE);
+						if ( r.nextInt(7) != 1 )						
+							b.getRelative(f2).setType(Material.COAL_ORE);
+						if ( r.nextInt(7) != 1 )						
+							b.getRelative(f1).getRelative(f2).setType(Material.COAL_ORE);
+						b = b.getRelative(r.nextBoolean() ? BlockFace.UP : BlockFace.DOWN);
+					}
+				}
+				
+				num = r.nextInt(4) + 2; // 2-5 veins of up to 8 redstone
+				for ( int i=0; i<num; i++ )
+				{
+					Block b = getRandomBlock(c, r, 32, 48);
+					BlockFace f1 = r.nextBoolean() ? BlockFace.NORTH : BlockFace.SOUTH, f2 = r.nextBoolean() ? BlockFace.EAST : BlockFace.WEST;
+					for ( int j=0; j<2; j++ )					
+					{
+						b.setType(Material.REDSTONE_ORE);
+						if ( r.nextInt(4) != 1 )	
+							b.getRelative(f1).setType(Material.REDSTONE_ORE);
+						if ( r.nextInt(4) != 1 )						
+							b.getRelative(f2).setType(Material.REDSTONE_ORE);
+						if ( r.nextInt(4) != 1 )						
+							b.getRelative(f1).getRelative(f2).setType(Material.REDSTONE_ORE);
+						b = b.getRelative(r.nextBoolean() ? BlockFace.UP : BlockFace.DOWN);
+					}
+				}
+			}
+		}
 	}
 	
 	@Override
