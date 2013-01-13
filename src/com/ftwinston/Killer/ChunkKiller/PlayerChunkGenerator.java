@@ -197,7 +197,33 @@ public class PlayerChunkGenerator extends ChunkGenerator
 			w.generateTree(c.getBlock(1 + r.nextInt(7), ChunkKiller.maxCoreY+1, 1 + r.nextInt(7)).getLocation(), TreeType.BIRCH);
 			w.generateTree(c.getBlock(9 + r.nextInt(6), ChunkKiller.maxCoreY+1, 1 + r.nextInt(7)).getLocation(), TreeType.JUNGLE);
 			w.generateTree(c.getBlock(1 + r.nextInt(7), ChunkKiller.maxCoreY+1, 9 + r.nextInt(6)).getLocation(), TreeType.REDWOOD);
-			w.generateTree(c.getBlock(9 + r.nextInt(6), ChunkKiller.maxCoreY+1, 9 + r.nextInt(6)).getLocation(), TreeType.TREE);
+			
+			// water in the remaining corner .. with some wheat growing next to it, for the chickens
+			
+			Block water = c.getBlock(10 + r.nextInt(4), ChunkKiller.maxCoreY, 10 + r.nextInt(4));
+			water.setType(Material.WATER);
+			water.getRelative(1, 0, 0).setType(Material.WATER);
+			water.getRelative(0, 0, 1).setType(Material.WATER);
+			water.getRelative(1, 0, 1).setType(Material.WATER);
+			
+			Block b = water.getRelative(2, 0, 0); b.setType(Material.SOIL); b.setData((byte)0x8);
+			b = water.getRelative(2, 0, 1); b.setType(Material.SOIL); b.setData((byte)0x8);
+			b = water.getRelative(0, 0, 2); b.setType(Material.SOIL); b.setData((byte)0x8);
+			b = water.getRelative(1, 0, 2); b.setType(Material.SOIL); b.setData((byte)0x8);
+			b = water.getRelative(2, 0, 2); b.setType(Material.SOIL); b.setData((byte)0x8);
+			
+			b = water.getRelative(2, 1, 0); b.setType(Material.CROPS); b.setData((byte)r.nextInt(7));
+			b = water.getRelative(2, 1, 1); b.setType(Material.CROPS); b.setData((byte)r.nextInt(7));
+			b = water.getRelative(0, 1, 2); b.setType(Material.CROPS); b.setData((byte)r.nextInt(7));
+			b = water.getRelative(1, 1, 2); b.setType(Material.CROPS); b.setData((byte)r.nextInt(7));
+			b = water.getRelative(2, 1, 2); b.setType(Material.CROPS); b.setData((byte)0x7);
+			
+			
+			// chickens, for food & feathers
+			w.spawnEntity(c.getBlock(9, ChunkKiller.maxCoreY + 1, 14).getLocation(), EntityType.CHICKEN);
+			w.spawnEntity(c.getBlock(14, ChunkKiller.maxCoreY + 1, 9).getLocation(), EntityType.CHICKEN);
+			w.spawnEntity(c.getBlock(9, ChunkKiller.maxCoreY + 1, 11).getLocation(), EntityType.CHICKEN);
+			w.spawnEntity(c.getBlock(11, ChunkKiller.maxCoreY + 1, 9).getLocation(), EntityType.CHICKEN);
 		}
 	}
 }
