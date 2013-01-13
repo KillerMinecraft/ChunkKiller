@@ -357,7 +357,7 @@ public class ChunkKiller extends GameMode
 	
 	public Chunk getChunkByIndex(int index)
 	{
-		int row = index / chunkRows, col = index % chunkRows;
+		int row = index % chunkRows, col = index / chunkRows;
 		return getWorld(0).getChunkAt(row * chunkSpacing, col * chunkSpacing);
 	}
 	
