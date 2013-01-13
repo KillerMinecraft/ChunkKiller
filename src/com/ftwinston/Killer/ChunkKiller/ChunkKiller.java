@@ -8,6 +8,7 @@ import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.World.Environment;
 import org.bukkit.WorldType;
@@ -235,15 +236,18 @@ public class ChunkKiller extends GameMode
 					remove.setType(Material.AIR);
 			}
 		
+		int index = getIndexOfChunk(c);
+		Player victimPlayer = getPlugin().getServer().getPlayerExact(playerIndices[index]);
+		if ( victimPlayer != null )
+			victimPlayer.playSound(victimPlayer.getLocation(), Sound.ANVIL_LAND, 1, 0);
+		
 		// if there are no other blocks of this type in this chunk, this chunk's player has been defeated
 		for ( y = 0; y<=maxCoreY; y++ )
 			if ( w.getBlockTypeIdAt(b.getX(), y, b.getZ()) == coreMaterial )
 				return; // don't continue, because this player isn't defeated
 		
 		// update this player to be defeated
-		int index = getIndexOfChunk(c);
 		chunksStillAlive[index] = false;
-		Player victimPlayer = getPlugin().getServer().getPlayerExact(playerIndices[index]);
 		Player killerPlayer = event.getPlayer();
 		
 		if ( getOption(useSlaves).isEnabled() )
