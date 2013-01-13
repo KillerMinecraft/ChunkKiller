@@ -65,15 +65,15 @@ public class ChunkKiller extends GameMode
 	@Override
 	public boolean isLocationProtected(Location l, Player player)
 	{
+		// cores can only be affected directly by players (not by explosions or pistons)
+		if ( player == null )
+			return l.getBlock().getTypeId() == coreMaterial;
+		
 		// if a player is a slave, their master's chunk is protected from them
 		int index = getPlayerIndex(player);
 		int slaveMaster = slaveMasters[index];
 		
 		if ( slaveMaster != -1 && l.getChunk() == getChunkByIndex(slaveMaster) )
-			return true;
-		
-		// cores can only be affected directly by players (not by explosions or pistons)
-		if ( player == null && l.getBlock().getTypeId() == coreMaterial )
 			return true;
 		
 		return false;
@@ -134,7 +134,6 @@ public class ChunkKiller extends GameMode
 			index = slaveMasters[index];
 		
 		Chunk c = getChunkByIndex(index);
-		
 		int x = (c.getX() << 4) + 8, z = (c.getZ() << 4) + 8;
 		Location loc = c.getWorld().getHighestBlockAt(x, z).getRelative(BlockFace.UP).getLocation();
 		
