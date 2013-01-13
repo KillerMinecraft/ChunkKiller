@@ -10,6 +10,7 @@ import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.TreeType;
 import org.bukkit.World;
 import org.bukkit.World.Environment;
 import org.bukkit.WorldType;
@@ -23,6 +24,7 @@ import org.bukkit.generator.BlockPopulator;
 import org.bukkit.generator.ChunkGenerator;
 
 import com.ftwinston.Killer.GameMode;
+import com.ftwinston.Killer.Helper;
 import com.ftwinston.Killer.Option;
 import com.ftwinston.Killer.WorldConfig;
 
@@ -34,7 +36,7 @@ public class ChunkKiller extends GameMode
 	boolean[] chunksStillAlive;
 	int[] slaveMasters;
 	int chunkRows, chunkCols, chunksOnLastRow;
-	final int chunkSpacing = 3, maxCoreY = 64, chunkCoreX = 8, chunkCoreZ = 8;
+	final int chunkSpacing = 3, maxCoreY = 63, chunkCoreX = 8, chunkCoreZ = 8;
 	
 	int coreMaterial = Material.EMERALD_BLOCK.getId();
 	
@@ -140,7 +142,7 @@ public class ChunkKiller extends GameMode
 		public List<BlockPopulator> getDefaultPopulators(World world)
 		{
 			List<BlockPopulator> list = new ArrayList<BlockPopulator>();
-			list.add(new OrePopulator());
+			list.add(new DetailPopulator());
 			return list;
 		}
 		
@@ -208,7 +210,7 @@ public class ChunkKiller extends GameMode
 			return b;
 		}
 		
-		public class OrePopulator extends BlockPopulator
+		public class DetailPopulator extends BlockPopulator
 		{
 			@Override
 			public void populate(World w, Random r, Chunk c)
@@ -218,10 +220,13 @@ public class ChunkKiller extends GameMode
 				
 				r.setSeed(w.getSeed()); // ensure each chunk generates the same
 				
-				int num = 3; // 3 clumps of gravel, each 3x3
+				for ( int y=0;y<=maxCoreY; y++ )
+					c.getBlock(chunkCoreX, y, chunkCoreZ).setTypeId(coreMaterial);
+				
+				int num = 5; // 3 clumps of gravel, each 3x3
 				for ( int i=0; i<num; i++ )
 				{
-					Block b = getRandomBlock(c, r, 45, 63);
+					Block b = getRandomBlock(c, r, 40, 62);
 					for ( int j=0; j<3; j++ )
 					{
 						b.setType(Material.GRAVEL);
@@ -250,7 +255,7 @@ public class ChunkKiller extends GameMode
 						b.getRelative(r.nextBoolean() ? BlockFace.UP : BlockFace.DOWN).setType(Material.DIAMOND_ORE);
 				}
 				
-				num = r.nextInt(3) + 3; // 3-5 veins of up to 8 iron
+				num = r.nextInt(3) + 5; // 5-7 veins of up to 8 iron
 				for ( int i=0; i<num; i++ )
 				{
 					Block b = getRandomBlock(c, r, 20, 44);
@@ -268,7 +273,7 @@ public class ChunkKiller extends GameMode
 					}
 				}
 				
-				num = r.nextInt(4) + 3; // 3-6 veins of up to 8 coal
+				num = r.nextInt(4) + 5; // 5-8 veins of up to 8 coal
 				for ( int i=0; i<num; i++ )
 				{
 					Block b = getRandomBlock(c, r, 32, 48);
@@ -303,6 +308,11 @@ public class ChunkKiller extends GameMode
 						b = b.getRelative(r.nextBoolean() ? BlockFace.UP : BlockFace.DOWN);
 					}
 				}
+				
+				w.generateTree(c.getBlock(1 + r.nextInt(7), maxCoreY+1, 1 + r.nextInt(7)).getLocation(), TreeType.BIRCH);
+				w.generateTree(c.getBlock(9 + r.nextInt(6), maxCoreY+1, 1 + r.nextInt(7)).getLocation(), TreeType.JUNGLE);
+				w.generateTree(c.getBlock(1 + r.nextInt(7), maxCoreY+1, 9 + r.nextInt(6)).getLocation(), TreeType.REDWOOD);
+				w.generateTree(c.getBlock(9 + r.nextInt(6), maxCoreY+1, 9 + r.nextInt(6)).getLocation(), TreeType.TREE);
 			}
 		}
 	}
@@ -421,7 +431,7 @@ public class ChunkKiller extends GameMode
 			}
 		
 		// if there are no other blocks of this type in this chunk, this chunk's player has been defeated
-		for ( y = 0; y<maxCoreY; y++ )
+		for ( y = 0; y<=maxCoreY; y++ )
 			if ( w.getBlockTypeIdAt(b.getX(), y, b.getZ()) == coreMaterial )
 				return; // don't continue, because this player isn't defeated
 		
