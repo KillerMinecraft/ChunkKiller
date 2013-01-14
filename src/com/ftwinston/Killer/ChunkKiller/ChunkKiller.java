@@ -135,14 +135,16 @@ public class ChunkKiller extends GameMode
 			index = slaveMasters[index];
 		
 		Chunk c = getChunkByIndex(index);
-		int x = (c.getX() << 4) + 8, z = (c.getZ() << 4) + 8;
-		Location loc = c.getWorld().getHighestBlockAt(x, z).getRelative(BlockFace.UP).getLocation();
+		Block spawn = c.getBlock(chunkCoreX, maxCoreY, chunkCoreZ);
+		if ( spawn.getTypeId() == coreMaterial )
+			return Helper.findSpaceForPlayer(new Location(c.getWorld(), spawn.getX(), spawn.getY() + 1, spawn.getZ()));
 		
-		// if chunk has been destroyed, spawn where the top would have been
-		if ( loc.getY() < 1 )
-			loc.setY(64);
-		
-		return loc;
+		do
+		{
+			spawn = spawn.getRelative(BlockFace.DOWN);
+		} while ( spawn.getTypeId() != coreMaterial && spawn.getY() > 0 );
+
+		return Helper.findSpaceForPlayer(new Location(c.getWorld(), spawn.getX(), spawn.getY() < 0 ? maxCoreY : spawn.getY() + 1, spawn.getZ()));
 	}
 	
 	@Override
