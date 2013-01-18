@@ -116,6 +116,13 @@ public class PlayerChunkGenerator extends ChunkGenerator
 			
 			r.setSeed(w.getSeed()); // ensure each chunk generates the same
 			
+			// dirt surrounding the core
+			for ( int y=1;y<ChunkKiller.maxCoreY; y++ )
+				for ( int x=ChunkKiller.chunkCoreX - 1; x<=ChunkKiller.chunkCoreX + 1; x++ )
+					for ( int z=ChunkKiller.chunkCoreX - 1; z<=ChunkKiller.chunkCoreX + 1; z++ )
+							if ( x != ChunkKiller.chunkCoreX || z != ChunkKiller.chunkCoreZ )
+								c.getBlock(x, y, z).setType(Material.DIRT);
+			
 			// lava
 			int num = 4, bx, by, bz;
 			for ( int i=0; i<num; i++ )
@@ -149,7 +156,7 @@ public class PlayerChunkGenerator extends ChunkGenerator
 			spawner = (CreatureSpawner)b.getState();
 			spawner.setSpawnedType(EntityType.SKELETON);
 			
-			num = 5; // 3 clumps of gravel, each 3x3
+			num = 5; // clumps of gravel, each 3x3x3
 			for ( int i=0; i<num; i++ )
 			{
 				b = getRandomBlock(c, r, 40, 62, 2);
@@ -168,7 +175,22 @@ public class PlayerChunkGenerator extends ChunkGenerator
 				}
 			}
 			
-			num = r.nextInt(4) + 2; // 2-5 veins of 2-4 diamonds
+			num = 4; // clumps of sand, each 3x3x1
+			for ( int i=0; i<num; i++ )
+			{
+				b = getRandomBlock(c, r, 46, 62, 2);
+				b.setType(Material.SAND);
+				b.getRelative(BlockFace.NORTH).setType(Material.SAND);
+				b.getRelative(BlockFace.EAST).setType(Material.SAND);
+				b.getRelative(BlockFace.SOUTH).setType(Material.SAND);
+				b.getRelative(BlockFace.WEST).setType(Material.SAND);
+				b.getRelative(BlockFace.NORTH_EAST).setType(Material.SAND);
+				b.getRelative(BlockFace.NORTH_WEST).setType(Material.SAND);
+				b.getRelative(BlockFace.SOUTH_EAST).setType(Material.SAND);
+				b.getRelative(BlockFace.SOUTH_WEST).setType(Material.SAND);
+			}
+			
+			num = r.nextInt(4) + 4; // 4-7 veins of 2-4 diamonds
 			for ( int i=0; i<num; i++ )
 			{
 				b = getRandomBlock(c, r, 2, 20, 1);
@@ -181,7 +203,7 @@ public class PlayerChunkGenerator extends ChunkGenerator
 					b.getRelative(r.nextBoolean() ? BlockFace.UP : BlockFace.DOWN).setType(Material.DIAMOND_ORE);
 			}
 			
-			num = r.nextInt(3) + 5; // 5-7 veins of up to 8 iron
+			num = r.nextInt(3) + 9; // 9-11 veins of up to 8 iron
 			for ( int i=0; i<num; i++ )
 			{
 				b = getRandomBlock(c, r, 20, 44, 1);
