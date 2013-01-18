@@ -217,6 +217,44 @@ public class ChunkKiller extends GameMode
 		return getSpawnLocation(player);
 	}
 	
+	@Override
+	public int getMonsterSpawnLimit(int quantity)
+	{
+		switch ( quantity )
+		{
+		case 0:
+			return 0;
+		case 1:
+			return 5;
+		case 2:
+		default:
+			return 10;
+		case 3:
+			return 15;
+		case 4:
+			return 25;
+		}
+	}
+	
+	@Override
+	public int getAnimalSpawnLimit(int quantity)
+	{
+		switch ( quantity )
+		{
+		case 0:
+			return 0;
+		case 1:
+			return 2;
+		case 2:
+		default:
+			return 4;
+		case 3:
+			return 7;
+		case 4:
+			return 10;
+		}
+	}
+	
 	@EventHandler
 	public void onBlockBreak(BlockBreakEvent event)
     {
