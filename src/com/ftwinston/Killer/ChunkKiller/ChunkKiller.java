@@ -290,24 +290,13 @@ public class ChunkKiller extends GameMode
 		// update this player to be defeated
 		chunksStillAlive[index] = false;
 		Player killerPlayer = event.getPlayer();
-		
-		if ( getOption(useSlaves).isEnabled() )
-		{// this player becomes a slave of the player who defeated them, as do any slaves THEY may have
-			int newMaster = killerPlayer == null ? -1 : getIndexByName(killerPlayer.getName());
-			slaveMasters[index] = newMaster;
-			for ( int i=0; i<slaveMasters.length; i++ )
-				if ( slaveMasters[i] == index )
-					slaveMasters[i] = newMaster;
-		}
-		else if ( victimPlayer != null && !getOption(outlastYourOwnChunk).isEnabled() )
-			victimPlayer.setHealth(0); // this player should die, now
-		
+
 		if ( killerPlayer != null )
 			broadcastMessage(ChatColor.RED + playerIndices[index] + "'s chunk was destroyed by " + killerPlayer.getName());
 		else
 			broadcastMessage(ChatColor.RED + playerIndices[index] + "'s chunk was destroyed");
 		
-		// check for game end ... this only accounts for ONE combination of options
+		// check for game end
 		int numRemaining = 0, remainingIndex = 0;
 		for ( int i=0; i<chunksStillAlive.length; i++ )
 			if ( chunksStillAlive[i] )
@@ -326,6 +315,27 @@ public class ChunkKiller extends GameMode
 			broadcastMessage(ChatColor.YELLOW + "All chunks have been destroyed, game drawn");
 			finishGame();
 		}
+		else if ( getOption(useSlaves).isEnabled() )
+		{// this player becomes a slave of the player who defeated them, as do any slaves THEY may have
+			int newMaster = killerPlayer == null ? -1 : getIndexByName(killerPlayer.getName());
+			slaveMasters[index] = newMaster;
+			victimPlayer.sendMessage(ChatColor.YELLOW + "You are now a slave of " + killerPlayer.getName());
+			killerPlayer.sendMessage(ChatColor.YELLOW + victimPlayer.getName() + " is now your slave");
+			
+			for ( int i=0; i<slaveMasters.length; i++ )
+				if ( slaveMasters[i] == index )
+				{
+					slaveMasters[i] = newMaster;
+					Player slave = getPlugin().getServer().getPlayerExact(playerIndices[i]);
+					if ( slave != null )
+					{
+						slave.sendMessage(ChatColor.YELLOW + "You are now a slave of " + killerPlayer.getName());
+						killerPlayer.sendMessage(ChatColor.YELLOW + slave.getName() + " is now your slave");
+					}
+				}
+		}
+		else if ( victimPlayer != null && !getOption(outlastYourOwnChunk).isEnabled() )
+			victimPlayer.setHealth(0); // this player should die, now
     }
 	
 	@EventHandler
