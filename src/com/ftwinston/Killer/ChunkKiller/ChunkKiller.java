@@ -18,6 +18,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 
 import com.ftwinston.Killer.GameMode;
 import com.ftwinston.Killer.Helper;
@@ -336,4 +337,32 @@ public class ChunkKiller extends GameMode
     	if ( event.getBlock().getTypeId() == coreMaterial )
 			event.setCancelled(true);
     }
+	
+	@EventHandler(ignoreCancelled = true)
+	public void onEntityDamage(EntityDamageByEntityEvent event)
+	{
+		if ( shouldIgnoreEvent(event.getEntity()) || !(event.getEntity() instanceof Player) )
+			return;
+
+		Player attacker = Helper.getAttacker(event);
+		if ( attacker == null )
+			return;
+					
+		Player victim = (Player)event.getEntity();
+		
+		int victimIndex = getPlayerIndex(victim);
+		int attackerIndex = getPlayerIndex(victim);
+		if ( victimIndex == -1 || attackerIndex == -1 )
+			return;
+		
+		if ( attackerIndex == slaveMasters[victimIndex] )
+		{// master attacking slave, instagib & stop them being a slave (force spectator)
+			event.setDamage(100);
+			slaveMasters[victimIndex] = -1;
+		}
+		else if ( victimIndex == slaveMasters[attackerIndex] )	
+		{// slave attacking master
+			event.setCancelled(true);
+		}
+	}
 }
