@@ -19,6 +19,9 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 
 import com.ftwinston.Killer.GameMode;
 import com.ftwinston.Killer.Helper;
@@ -203,6 +206,50 @@ public class ChunkKiller extends GameMode
 	{
 		if ( hasGameFinished() )
 			return;
+	}
+	
+	@EventHandler(ignoreCancelled = true)
+	public void onPlayerDeath(PlayerDeathEvent event)
+	{
+		if ( shouldIgnoreEvent(event.getEntity()))
+			return;
+		
+		int index = getPlayerIndex(event.getEntity());
+		if ( slaveMasters[index] != -1 )
+			index = slaveMasters[index];
+		Chunk c = getChunkByIndex(index);
+		PlayerInventory inv = event.getEntity().getInventory();
+		
+		ItemStack items[] = inv.getContents();
+		inv.clear();
+		
+		World w = event.getEntity().getWorld();
+		
+		Block b = c.getBlock(1, maxCoreY, 1);
+		int minX = b.getX(), minZ = b.getZ();
+		b = c.getBlock(15, maxCoreY, 15);
+		int maxX = b.getX(), maxZ = b.getZ();
+		
+		if ( minX > maxX )
+		{
+			int tmp = minX;
+			minX = maxX;
+			maxX = tmp;
+		}
+		
+		if ( minZ > maxZ )
+		{
+			int tmp = minZ;
+			minZ = maxZ;
+			maxZ = tmp;
+		}
+		
+		for ( ItemStack item : items )
+		{
+			int x = minX + random.nextInt(14), z = minZ + random.nextInt(14);
+			Location loc = new Location(w, x, w.getHighestBlockYAt(x,  z) + 1, z);
+			w.dropItem(loc, item);
+		}
 	}
 	
 	@Override
