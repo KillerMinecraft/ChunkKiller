@@ -15,6 +15,7 @@ import org.bukkit.WorldType;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
@@ -303,7 +304,7 @@ public class ChunkKiller extends GameMode
 		}
 	}
 	
-	@EventHandler
+	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
 	public void onBlockBreak(BlockBreakEvent event)
     {
 		Block b = event.getBlock();
@@ -385,7 +386,7 @@ public class ChunkKiller extends GameMode
 			victimPlayer.setHealth(0); // this player should die, now
     }
 	
-	@EventHandler
+	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent event)
     {
     	if ( shouldIgnoreEvent(event.getBlock()) )
@@ -395,7 +396,7 @@ public class ChunkKiller extends GameMode
 			event.setCancelled(true);
     }
 	
-	@EventHandler(ignoreCancelled = true)
+	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
 	public void onEntityDamage(EntityDamageByEntityEvent event)
 	{
 		if ( shouldIgnoreEvent(event.getEntity()) || !(event.getEntity() instanceof Player) )
