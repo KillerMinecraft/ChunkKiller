@@ -1,4 +1,4 @@
-package com.ftwinston.Killer.ChunkKiller;
+package com.ftwinston.KillerMinecraft.Modules.ChunkKiller;
 
 import java.util.Collections;
 import java.util.List;
@@ -24,14 +24,16 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
-import com.ftwinston.Killer.GameMode;
-import com.ftwinston.Killer.Helper;
-import com.ftwinston.Killer.Option;
-import com.ftwinston.Killer.WorldConfig;
+import com.ftwinston.KillerMinecraft.GameMode;
+import com.ftwinston.KillerMinecraft.Helper;
+import com.ftwinston.KillerMinecraft.Option;
+import com.ftwinston.KillerMinecraft.WorldConfig;
+import com.ftwinston.KillerMinecraft.Configuration.TeamInfo;
+import com.ftwinston.KillerMinecraft.Configuration.ToggleOption;
 
 public class ChunkKiller extends GameMode
 {
-	public static final int useSlaves = 0, outlastYourOwnChunk = 1;	
+	ToggleOption useSlaves, outlastYourOwnChunk;	
 	
 	String[] playerIndices;
 	boolean[] chunksStillAlive;
@@ -46,16 +48,15 @@ public class ChunkKiller extends GameMode
 	@Override
 	public Option[] setupOptions()
 	{
-		Option[] options = {
-			new Option("Losing players become slaves", true),
-			new Option("Outlast your own chunk", false)
-		};
+		useSlaves = new ToggleOption("Losing players become slaves", true);
+		outlastYourOwnChunk = new ToggleOption("Outlast your own chunk", false);
 		
-		return options;
+		ToggleOption.ensureOnlyOneEnabled(useSlaves, outlastYourOwnChunk);
+		return new Option[] { useSlaves, outlastYourOwnChunk };
 	}
 	
 	@Override
-	public String getHelpMessage(int num, int team)
+	public String getHelpMessage(int num, TeamInfo team)
 	{
 		switch ( num )
 		{
@@ -91,11 +92,14 @@ public class ChunkKiller extends GameMode
 		// you can respawn if your chunk is still alive, OR if slaves are enabled and you have a master
 		int index = getPlayerIndex(player);
 		return chunksStillAlive[index] ||
-		(getOption(useSlaves).isEnabled() && slaveMasters[index] != -1);
+		(useSlaves.isEnabled() && slaveMasters[index] != -1);
 	}
 	
 	@Override
 	public boolean useDiscreetDeathMessages() { return false; }
+	
+	@Override
+	public boolean allowWorldGeneratorSelection() { return false; }
 	
 	@Override
 	public Environment[] getWorldsToGenerate() { return new Environment[] { Environment.NORMAL }; }
@@ -136,7 +140,7 @@ public class ChunkKiller extends GameMode
 		
 		int index = getPlayerIndex(player);
 		
-		if ( !chunksStillAlive[index] && getOption(useSlaves).isEnabled() )
+		if ( !chunksStillAlive[index] && useSlaves.isEnabled() )
 			index = slaveMasters[index];
 		
 		Chunk c = getChunkByIndex(index);
@@ -153,10 +157,9 @@ public class ChunkKiller extends GameMode
 	}
 	
 	@Override
-	public void gameStarted(boolean isNewWorlds)
+	public void gameStarted()
 	{
-		if ( !isNewWorlds )
-			; // this ... wouldn't work. Game mode ought to have a function for whether this is allowed at all??
+
 	}
 	
 	public int getPlayerIndex(Player player)
@@ -193,7 +196,7 @@ public class ChunkKiller extends GameMode
 	}
 	
 	@Override
-	public void playerJoinedLate(Player player, boolean isNewPlayer)
+	public void playerJoined(Player player, boolean isNewPlayer)
 	{
 		if ( !isNewPlayer )
 			return;
@@ -203,7 +206,7 @@ public class ChunkKiller extends GameMode
 	}
 	
 	@Override
-	public void playerKilledOrQuit(OfflinePlayer player)
+	public void playerQuit(OfflinePlayer player)
 	{
 		if ( hasGameFinished() )
 			return;
@@ -212,9 +215,6 @@ public class ChunkKiller extends GameMode
 	@EventHandler(ignoreCancelled = true)
 	public void onPlayerDeath(PlayerDeathEvent event)
 	{
-		if ( shouldIgnoreEvent(event.getEntity()))
-			return;
-		
 		int index = getPlayerIndex(event.getEntity());
 		if ( slaveMasters[index] != -1 )
 			index = slaveMasters[index];
@@ -251,13 +251,6 @@ public class ChunkKiller extends GameMode
 			Location loc = new Location(w, x, w.getHighestBlockYAt(x,  z) + 1, z);
 			w.dropItem(loc, item);
 		}
-	}
-	
-	@Override
-	public void toggleOption(int num)
-	{
-		super.toggleOption(num);
-		Option.ensureOnlyOneEnabled(getOptions(), num, useSlaves, outlastYourOwnChunk);
 	}
 	
 	@Override
@@ -308,9 +301,6 @@ public class ChunkKiller extends GameMode
 	public void onBlockBreak(BlockBreakEvent event)
     {
 		Block b = event.getBlock();
-		if ( shouldIgnoreEvent(b) || b.getTypeId() != coreMaterial )
-			return;
-		
     	event.setExpToDrop(50);
 		
 		// remove all blocks on the same level as this, in the same chunk
@@ -363,7 +353,7 @@ public class ChunkKiller extends GameMode
 			broadcastMessage(ChatColor.YELLOW + "All chunks have been destroyed, game drawn");
 			finishGame();
 		}
-		else if ( getOption(useSlaves).isEnabled() )
+		else if ( useSlaves.isEnabled() )
 		{// this player becomes a slave of the player who defeated them, as do any slaves THEY may have
 			int newMaster = killerPlayer == null ? -1 : getIndexByName(killerPlayer.getName());
 			slaveMasters[index] = newMaster;
@@ -382,16 +372,13 @@ public class ChunkKiller extends GameMode
 					}
 				}
 		}
-		else if ( victimPlayer != null && !getOption(outlastYourOwnChunk).isEnabled() )
+		else if ( victimPlayer != null && !outlastYourOwnChunk.isEnabled() )
 			victimPlayer.setHealth(0); // this player should die, now
     }
 	
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent event)
     {
-    	if ( shouldIgnoreEvent(event.getBlock()) )
-			return;
-		
     	if ( event.getBlock().getTypeId() == coreMaterial )
 			event.setCancelled(true);
     }
@@ -399,7 +386,7 @@ public class ChunkKiller extends GameMode
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
 	public void onEntityDamage(EntityDamageByEntityEvent event)
 	{
-		if ( shouldIgnoreEvent(event.getEntity()) || !(event.getEntity() instanceof Player) )
+		if ( !(event.getEntity() instanceof Player) )
 			return;
 
 		Player attacker = Helper.getAttacker(event);

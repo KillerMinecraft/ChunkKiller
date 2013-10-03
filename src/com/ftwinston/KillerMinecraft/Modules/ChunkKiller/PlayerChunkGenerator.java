@@ -1,4 +1,4 @@
-package com.ftwinston.Killer.ChunkKiller;
+package com.ftwinston.KillerMinecraft.Modules.ChunkKiller;
 
 import java.util.ArrayList;
 import java.util.List;
