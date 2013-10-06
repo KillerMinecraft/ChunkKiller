@@ -67,9 +67,6 @@ public class ChunkKiller extends GameMode
 	}
 	
 	@Override
-	public boolean teamAllocationIsSecret() { return false; }
-	
-	@Override
 	public boolean isLocationProtected(Location l, Player player)
 	{
 		// cores can only be affected directly by players (not by explosions or pistons)
