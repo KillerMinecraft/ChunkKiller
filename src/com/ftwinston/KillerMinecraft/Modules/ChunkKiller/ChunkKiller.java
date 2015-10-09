@@ -40,7 +40,7 @@ public class ChunkKiller extends GameMode
 	int[] slaveMasters;
 	int chunkRows, chunkCols, chunksOnLastRow;
 	static final int maxCoreY = 63, chunkCoreX = 8, chunkCoreZ = 8, chunkSpacing = 3;
-	static final int coreMaterial = Material.EMERALD_BLOCK.getId();
+	static final Material coreMaterial = Material.EMERALD_BLOCK;
 	
 	@Override
 	public int getMinPlayers() { return 2; } // one player on each team is our minimum
@@ -71,7 +71,7 @@ public class ChunkKiller extends GameMode
 	{
 		// cores can only be affected directly by players (not by explosions or pistons)
 		if ( player == null )
-			return l.getBlock().getTypeId() == coreMaterial;
+			return l.getBlock().getType() == coreMaterial;
 		
 		// if a player is a slave, their master's chunk is protected from them
 		int index = getPlayerIndex(player);
@@ -83,18 +83,16 @@ public class ChunkKiller extends GameMode
 		return false;
 	}
 	
-	@Override
-	public boolean isAllowedToRespawn(Player player)
-	{
+	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+	public void onPlayerKilled(PlayerDeathEvent event)
+	{	
 		// you can respawn if your chunk is still alive, OR if slaves are enabled and you have a master
-		int index = getPlayerIndex(player);
-		return chunksStillAlive[index] ||
-		(useSlaves.isEnabled() && slaveMasters[index] != -1);
+		int index = getPlayerIndex(event.getEntity());
+		
+		if (!chunksStillAlive[index] && (!useSlaves.isEnabled() || slaveMasters[index] == -1))
+			Helper.makeSpectator(getGame(), event.getEntity());
 	}
-	
-	@Override
-	public boolean useDiscreetDeathMessages() { return false; }
-	
+
 	@Override
 	public boolean allowWorldGeneratorSelection() { return false; }
 	
@@ -142,13 +140,13 @@ public class ChunkKiller extends GameMode
 		
 		Chunk c = getChunkByIndex(index);
 		Block spawn = c.getBlock(chunkCoreX, maxCoreY, chunkCoreZ);
-		if ( spawn.getTypeId() == coreMaterial )
+		if ( spawn.getType() == coreMaterial )
 			return Helper.findSpaceForPlayer(new Location(c.getWorld(), spawn.getX(), spawn.getY() + 1, spawn.getZ()));
 		
 		do
 		{
 			spawn = spawn.getRelative(BlockFace.DOWN);
-		} while ( spawn.getTypeId() != coreMaterial && spawn.getY() > 0 );
+		} while ( spawn.getType() != coreMaterial && spawn.getY() > 0 );
 
 		return Helper.findSpaceForPlayer(new Location(c.getWorld(), spawn.getX(), spawn.getY() < 0 ? maxCoreY : spawn.getY() + 1, spawn.getZ()));
 	}
@@ -193,11 +191,8 @@ public class ChunkKiller extends GameMode
 	}
 	
 	@Override
-	public void playerJoined(Player player, boolean isNewPlayer)
+	public void playerJoinedLate(Player player)
 	{
-		if ( !isNewPlayer )
-			return;
-		
 		// make them be a spectator
 		Helper.makeSpectator(getGame(), player);
 	}
@@ -319,7 +314,7 @@ public class ChunkKiller extends GameMode
 		
 		// if there are no other blocks of this type in this chunk, this chunk's player has been defeated
 		for ( y = 0; y<=maxCoreY; y++ )
-			if ( w.getBlockTypeIdAt(b.getX(), y, b.getZ()) == coreMaterial )
+			if ( w.getBlockAt(b.getX(), y, b.getZ()).getType() == coreMaterial )
 				return; // don't continue, because this player isn't defeated
 		
 		// update this player to be defeated
@@ -376,7 +371,7 @@ public class ChunkKiller extends GameMode
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent event)
     {
-    	if ( event.getBlock().getTypeId() == coreMaterial )
+    	if ( event.getBlock().getType() == coreMaterial )
 			event.setCancelled(true);
     }
 	

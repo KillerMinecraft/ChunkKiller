@@ -282,7 +282,7 @@ public class PlayerChunkGenerator extends ChunkGenerator
 			
 			// the core
 			for ( int y=0;y<=ChunkKiller.maxCoreY; y++ )
-				c.getBlock(ChunkKiller.chunkCoreX, y, ChunkKiller.chunkCoreZ).setTypeId(ChunkKiller.coreMaterial);
+				c.getBlock(ChunkKiller.chunkCoreX, y, ChunkKiller.chunkCoreZ).setType(ChunkKiller.coreMaterial);
 			
 			// chickens, for food & feathers
 			w.spawnEntity(c.getBlock(9, ChunkKiller.maxCoreY + 1, 14).getLocation(), EntityType.CHICKEN);
