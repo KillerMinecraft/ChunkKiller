@@ -116,13 +116,6 @@ public class PlayerChunkGenerator extends ChunkGenerator
 			
 			r.setSeed(w.getSeed()); // ensure each chunk generates the same
 			
-			// dirt surrounding the core
-			for ( int y=1;y<ChunkKiller.maxCoreY; y++ )
-				for ( int x=ChunkKiller.chunkCoreX - 1; x<=ChunkKiller.chunkCoreX + 1; x++ )
-					for ( int z=ChunkKiller.chunkCoreX - 1; z<=ChunkKiller.chunkCoreX + 1; z++ )
-							if ( x != ChunkKiller.chunkCoreX || z != ChunkKiller.chunkCoreZ )
-								c.getBlock(x, y, z).setType(Material.DIRT);
-			
 			// lava
 			int num = 4, bx, by, bz;
 			for ( int i=0; i<num; i++ )
@@ -257,12 +250,12 @@ public class PlayerChunkGenerator extends ChunkGenerator
 				}
 			}
 			
-			w.generateTree(c.getBlock(1 + r.nextInt(7), ChunkKiller.maxCoreY+1, 1 + r.nextInt(7)).getLocation(), TreeType.BIRCH);
-			w.generateTree(c.getBlock(9 + r.nextInt(6), ChunkKiller.maxCoreY+1, 1 + r.nextInt(7)).getLocation(), TreeType.JUNGLE);
-			w.generateTree(c.getBlock(1 + r.nextInt(7), ChunkKiller.maxCoreY+1, 9 + r.nextInt(6)).getLocation(), TreeType.REDWOOD);
+			w.generateTree(c.getBlock(1 + r.nextInt(7), ChunkKiller.chunkCoreY+1, 1 + r.nextInt(7)).getLocation(), TreeType.BIRCH);
+			w.generateTree(c.getBlock(9 + r.nextInt(6), ChunkKiller.chunkCoreY+1, 1 + r.nextInt(7)).getLocation(), TreeType.JUNGLE);
+			w.generateTree(c.getBlock(1 + r.nextInt(7), ChunkKiller.chunkCoreY+1, 9 + r.nextInt(6)).getLocation(), TreeType.REDWOOD);
 			
 			// water in the remaining corner .. with some wheat growing next to it, for the chickens
-			Block water = c.getBlock(10 + r.nextInt(4), ChunkKiller.maxCoreY, 10 + r.nextInt(4));
+			Block water = c.getBlock(10 + r.nextInt(4), ChunkKiller.chunkCoreY, 10 + r.nextInt(4));
 			water.setType(Material.STATIONARY_WATER);
 			water.getRelative(1, 0, 0).setType(Material.STATIONARY_WATER);
 			water.getRelative(0, 0, 1).setType(Material.STATIONARY_WATER);
@@ -281,14 +274,13 @@ public class PlayerChunkGenerator extends ChunkGenerator
 			b = water.getRelative(2, 1, 2); b.setType(Material.CROPS); b.setData((byte)0x7);
 			
 			// the core
-			for ( int y=0;y<=ChunkKiller.maxCoreY; y++ )
-				c.getBlock(ChunkKiller.chunkCoreX, y, ChunkKiller.chunkCoreZ).setType(ChunkKiller.coreMaterial);
+			c.getBlock(ChunkKiller.chunkCoreX, ChunkKiller.chunkCoreY, ChunkKiller.chunkCoreZ).setType(ChunkKiller.coreMaterial);
 			
 			// chickens, for food & feathers
-			w.spawnEntity(c.getBlock(9, ChunkKiller.maxCoreY + 1, 14).getLocation(), EntityType.CHICKEN);
-			w.spawnEntity(c.getBlock(14, ChunkKiller.maxCoreY + 1, 9).getLocation(), EntityType.CHICKEN);
-			w.spawnEntity(c.getBlock(9, ChunkKiller.maxCoreY + 1, 11).getLocation(), EntityType.CHICKEN);
-			w.spawnEntity(c.getBlock(11, ChunkKiller.maxCoreY + 1, 9).getLocation(), EntityType.CHICKEN);
+			w.spawnEntity(c.getBlock(9, ChunkKiller.chunkCoreY + 1, 14).getLocation(), EntityType.CHICKEN);
+			w.spawnEntity(c.getBlock(14, ChunkKiller.chunkCoreY + 1, 9).getLocation(), EntityType.CHICKEN);
+			w.spawnEntity(c.getBlock(9, ChunkKiller.chunkCoreY + 1, 11).getLocation(), EntityType.CHICKEN);
+			w.spawnEntity(c.getBlock(11, ChunkKiller.chunkCoreY + 1, 9).getLocation(), EntityType.CHICKEN);
 		}
 	}
 }

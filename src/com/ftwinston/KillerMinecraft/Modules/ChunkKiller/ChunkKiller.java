@@ -36,10 +36,10 @@ public class ChunkKiller extends GameMode
 	ToggleOption useSlaves, outlastYourOwnChunk;	
 	
 	String[] playerIndices;
-	boolean[] chunksStillAlive;
+	int[] playerScores;
 	int[] slaveMasters;
 	int chunkRows, chunkCols, chunksOnLastRow;
-	static final int maxCoreY = 63, chunkCoreX = 8, chunkCoreZ = 8, chunkSpacing = 3;
+	static final int chunkCoreY = 63, chunkCoreX = 8, chunkCoreZ = 8, chunkSpacing = 3;
 	static final Material coreMaterial = Material.EMERALD_BLOCK;
 	
 	@Override
@@ -89,7 +89,7 @@ public class ChunkKiller extends GameMode
 		// you can respawn if your chunk is still alive, OR if slaves are enabled and you have a master
 		int index = getPlayerIndex(event.getEntity());
 		
-		if (!chunksStillAlive[index] && (!useSlaves.isEnabled() || slaveMasters[index] == -1))
+		if (playerScores[index] <= 0 && (!useSlaves.isEnabled() || slaveMasters[index] == -1))
 			Helper.makeSpectator(getGame(), event.getEntity());
 	}
 
@@ -108,12 +108,12 @@ public class ChunkKiller extends GameMode
 		
 		// set up an array of player names, so we can easily determine the index (and thus the chunk) of any given player
 		playerIndices = new String[players.size()];
-		chunksStillAlive = new boolean[playerIndices.length];
+		playerScores = new int[playerIndices.length];
 		slaveMasters = new int[playerIndices.length];
 		for ( int i=0; i<playerIndices.length; i++ )
 		{
 			playerIndices[i] = players.get(i).getName();
-			chunksStillAlive[i] = true;
+			playerScores[i] = chunkCoreY - 1;
 			slaveMasters[i] = -1;
 		}
 		
@@ -135,20 +135,13 @@ public class ChunkKiller extends GameMode
 		
 		int index = getPlayerIndex(player);
 		
-		if ( !chunksStillAlive[index] && useSlaves.isEnabled() )
+		if ( playerScores[index] <= 0 && useSlaves.isEnabled() )
 			index = slaveMasters[index];
 		
 		Chunk c = getChunkByIndex(index);
-		Block spawn = c.getBlock(chunkCoreX, maxCoreY, chunkCoreZ);
-		if ( spawn.getType() == coreMaterial )
-			return Helper.findSpaceForPlayer(new Location(c.getWorld(), spawn.getX(), spawn.getY() + 1, spawn.getZ()));
+		Block spawn = c.getBlock(chunkCoreX, chunkCoreY, chunkCoreZ);
 		
-		do
-		{
-			spawn = spawn.getRelative(BlockFace.DOWN);
-		} while ( spawn.getType() != coreMaterial && spawn.getY() > 0 );
-
-		return Helper.findSpaceForPlayer(new Location(c.getWorld(), spawn.getX(), spawn.getY() < 0 ? maxCoreY : spawn.getY() + 1, spawn.getZ()));
+		return Helper.findSpaceForPlayer(new Location(c.getWorld(), spawn.getX(), spawn.getY() + 1, spawn.getZ()));
 	}
 	
 	@Override
@@ -218,9 +211,9 @@ public class ChunkKiller extends GameMode
 		
 		World w = event.getEntity().getWorld();
 		
-		Block b = c.getBlock(1, maxCoreY, 1);
+		Block b = c.getBlock(1, chunkCoreY, 1);
 		int minX = b.getX(), minZ = b.getZ();
-		b = c.getBlock(15, maxCoreY, 15);
+		b = c.getBlock(15, chunkCoreY, 15);
 		int maxX = b.getX(), maxZ = b.getZ();
 		
 		if ( minX > maxX )
@@ -293,32 +286,39 @@ public class ChunkKiller extends GameMode
 	public void onBlockBreak(BlockBreakEvent event)
     {
 		Block b = event.getBlock();
+		if (b.getType() != coreMaterial)
+			return;
+		
     	event.setExpToDrop(50);
 		
-		// remove all blocks on the same level as this, in the same chunk
 		Chunk c = b.getChunk();
-		World w = b.getWorld();
-		int y = b.getY();
-		for ( int x=0; x<16; x++ )
-			for ( int z=0; z<16; z++ )
-			{
-				Block remove = c.getBlock(x,y,z);
-				if ( remove != b )
-					remove.setType(Material.AIR);
-			}
 		
 		int index = getIndexOfChunk(c);
 		Player victimPlayer = getPlugin().getServer().getPlayerExact(playerIndices[index]);
 		if ( victimPlayer != null )
 			victimPlayer.playSound(victimPlayer.getLocation(), Sound.ANVIL_LAND, 1, 0);
+
+    	int scoreRemaining = --playerScores[index];
+    	
+    	int yToRemove = chunkCoreY - scoreRemaining;
 		
-		// if there are no other blocks of this type in this chunk, this chunk's player has been defeated
-		for ( y = 0; y<=maxCoreY; y++ )
-			if ( w.getBlockAt(b.getX(), y, b.getZ()).getType() == coreMaterial )
-				return; // don't continue, because this player isn't defeated
+		// remove levels of this chunk, from the bottom up
+		World w = b.getWorld();
+		for ( int x=0; x<16; x++ )
+			for ( int z=0; z<16; z++ )
+			{
+				Block remove = c.getBlock(x,yToRemove,z);
+				if ( remove != b )
+					remove.setType(Material.AIR);
+			}
 		
-		// update this player to be defeated
-		chunksStillAlive[index] = false;
+		// this chunk's player hasn't yet been defeated, don't continue
+		if (scoreRemaining > 0)
+		{
+			event.setCancelled(true);
+			return;
+		}
+		
 		Player killerPlayer = event.getPlayer();
 
 		if ( killerPlayer != null )
@@ -328,8 +328,8 @@ public class ChunkKiller extends GameMode
 		
 		// check for game end
 		int numRemaining = 0, remainingIndex = 0;
-		for ( int i=0; i<chunksStillAlive.length; i++ )
-			if ( chunksStillAlive[i] )
+		for ( int i=0; i<playerScores.length; i++ )
+			if ( playerScores[i] > 0 )
 			{
 				numRemaining++;
 				remainingIndex = i;
