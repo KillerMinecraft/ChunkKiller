@@ -1,6 +1,6 @@
-name: Chunk Killer
+name: Chunk_Killer
 main: com.ftwinston.KillerMinecraft.Modules.ChunkKiller.Plugin
-depend: [Killer Minecraft]
+depend: [Killer_Minecraft]
 version: 1
 load: STARTUP
 description: A game mode for Killer Minecraft
