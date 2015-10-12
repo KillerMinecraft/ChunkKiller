@@ -108,6 +108,7 @@ public class PlayerChunkGenerator extends ChunkGenerator
 	
 	public class DetailPopulator extends BlockPopulator
 	{
+		@SuppressWarnings("deprecation")
 		@Override
 		public void populate(World w, Random r, Chunk c)
 		{

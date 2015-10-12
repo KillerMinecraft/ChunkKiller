@@ -13,7 +13,6 @@ import org.bukkit.World;
 import org.bukkit.World.Environment;
 import org.bukkit.WorldType;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.EventHandler;
@@ -294,7 +293,7 @@ public class ChunkKiller extends GameMode
 		Chunk c = b.getChunk();
 		
 		int index = getIndexOfChunk(c);
-		Player victimPlayer = getPlugin().getServer().getPlayerExact(playerIndices[index]);
+		Player victimPlayer = Helper.getPlayer(playerIndices[index]);
 		if ( victimPlayer != null )
 			victimPlayer.playSound(victimPlayer.getLocation(), Sound.ANVIL_LAND, 1, 0);
 
@@ -303,7 +302,6 @@ public class ChunkKiller extends GameMode
     	int yToRemove = chunkCoreY - scoreRemaining;
 		
 		// remove levels of this chunk, from the bottom up
-		World w = b.getWorld();
 		for ( int x=0; x<16; x++ )
 			for ( int z=0; z<16; z++ )
 			{
@@ -356,7 +354,7 @@ public class ChunkKiller extends GameMode
 				if ( slaveMasters[i] == index )
 				{
 					slaveMasters[i] = newMaster;
-					Player slave = getPlugin().getServer().getPlayerExact(playerIndices[i]);
+					Player slave = Helper.getPlayer(playerIndices[i]);
 					if ( slave != null )
 					{
 						slave.sendMessage(ChatColor.YELLOW + "You are now a slave of " + killerPlayer.getName());
