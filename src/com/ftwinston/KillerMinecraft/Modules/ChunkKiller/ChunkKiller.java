@@ -112,7 +112,7 @@ public class ChunkKiller extends GameMode
 		for ( int i=0; i<playerIndices.length; i++ )
 		{
 			playerIndices[i] = players.get(i).getName();
-			playerScores[i] = chunkCoreY - 1;
+			playerScores[i] = chunkCoreY;
 			slaveMasters[i] = -1;
 		}
 		
@@ -231,6 +231,9 @@ public class ChunkKiller extends GameMode
 		
 		for ( ItemStack item : items )
 		{
+			if (item == null)
+				continue;
+			
 			int x = minX + random.nextInt(14), z = minZ + random.nextInt(14);
 			Location loc = new Location(w, x, w.getHighestBlockYAt(x,  z) + 1, z);
 			w.dropItem(loc, item);

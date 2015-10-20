@@ -252,7 +252,7 @@ public class PlayerChunkGenerator extends ChunkGenerator
 			}
 			
 			w.generateTree(c.getBlock(1 + r.nextInt(7), ChunkKiller.chunkCoreY+1, 1 + r.nextInt(7)).getLocation(), TreeType.BIRCH);
-			w.generateTree(c.getBlock(9 + r.nextInt(6), ChunkKiller.chunkCoreY+1, 1 + r.nextInt(7)).getLocation(), TreeType.JUNGLE);
+			w.generateTree(c.getBlock(9 + r.nextInt(6), ChunkKiller.chunkCoreY+1, 1 + r.nextInt(7)).getLocation(), TreeType.SMALL_JUNGLE);
 			w.generateTree(c.getBlock(1 + r.nextInt(7), ChunkKiller.chunkCoreY+1, 9 + r.nextInt(6)).getLocation(), TreeType.REDWOOD);
 			
 			// water in the remaining corner .. with some wheat growing next to it, for the chickens
