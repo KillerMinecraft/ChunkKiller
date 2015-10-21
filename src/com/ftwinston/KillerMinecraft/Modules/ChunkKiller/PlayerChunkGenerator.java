@@ -51,13 +51,8 @@ public class PlayerChunkGenerator extends ChunkGenerator
 				data[i][j] = 1;
 		}
 
-		// bedrock
-		int i = 0;
-		for ( int j=0; j<256; j++ )
-			data[i][j] = 7;
-		
 		// dirt
-		i = numChunkSections - 1;
+		int i = numChunkSections - 1;
 		for ( int j=2048; j<3840; j++ )
 			data[i][j] = 3;
 		
@@ -187,7 +182,7 @@ public class PlayerChunkGenerator extends ChunkGenerator
 			num = r.nextInt(4) + 4; // 4-7 veins of 2-4 diamonds
 			for ( int i=0; i<num; i++ )
 			{
-				b = getRandomBlock(c, r, 2, 20, 1);
+				b = getRandomBlock(c, r, 1, 20, 1);
 				b.setType(Material.DIAMOND_ORE);
 				if ( r.nextInt(3) != 1 )	
 					b.getRelative(r.nextBoolean() ? BlockFace.NORTH : BlockFace.SOUTH).setType(Material.DIAMOND_ORE);

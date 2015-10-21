@@ -43,7 +43,7 @@ public class ChunkKiller extends GameMode
 	int[] playerScores;
 	int[] slaveMasters;
 	int chunkRows, chunkCols, chunksOnLastRow;
-	static final int chunkCoreY = 63, chunkCoreX = 8, chunkCoreZ = 8, chunkSpacing = 3;
+	static final int chunkCoreY = 63, chunkCoreX = 8, chunkCoreZ = 8, chunkSpacing = 3, initialScore = chunkCoreY + 1;
 	static final Material coreMaterial = Material.EMERALD_BLOCK;
 	
 	@Override
@@ -129,7 +129,7 @@ public class ChunkKiller extends GameMode
 		for ( int i=0; i<playerIndices.length; i++ )
 		{
 			playerIndices[i] = players.get(i).getName();
-			playerScores[i] = chunkCoreY;
+			playerScores[i] = initialScore;
 			slaveMasters[i] = -1;
 		}
 		
@@ -166,7 +166,7 @@ public class ChunkKiller extends GameMode
 		for (Player player : getOnlinePlayers())
 		{
 			Score score = scoreObjective.getScore(player.getName());
-			score.setScore(chunkCoreY);
+			score.setScore(initialScore);
 		}
 	}
 	
