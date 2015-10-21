@@ -3,6 +3,7 @@ package com.ftwinston.KillerMinecraft.Modules.ChunkKiller;
 import java.util.Collections;
 import java.util.List;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
@@ -22,6 +23,10 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.scoreboard.DisplaySlot;
+import org.bukkit.scoreboard.Objective;
+import org.bukkit.scoreboard.Score;
+import org.bukkit.scoreboard.Scoreboard;
 
 import com.ftwinston.KillerMinecraft.GameMode;
 import com.ftwinston.KillerMinecraft.Helper;
@@ -63,6 +68,18 @@ public class ChunkKiller extends GameMode
 			default:
 				return null;
 		}
+	}
+	
+	Objective scoreObjective;
+	
+	@Override
+	public Scoreboard createScoreboard()
+	{
+		Scoreboard scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
+		scoreObjective = scoreboard.registerNewObjective("layers", "dummy");
+		scoreObjective.setDisplaySlot(DisplaySlot.SIDEBAR);
+		scoreObjective.setDisplayName("Layers left");
+		return scoreboard;
 	}
 	
 	@Override
@@ -146,7 +163,11 @@ public class ChunkKiller extends GameMode
 	@Override
 	public void gameStarted()
 	{
-
+		for (Player player : getOnlinePlayers())
+		{
+			Score score = scoreObjective.getScore(player.getName());
+			score.setScore(chunkCoreY);
+		}
 	}
 	
 	public int getPlayerIndex(Player player)
@@ -301,6 +322,8 @@ public class ChunkKiller extends GameMode
 			victimPlayer.playSound(victimPlayer.getLocation(), Sound.ANVIL_LAND, 1, 0);
 
     	int scoreRemaining = --playerScores[index];
+    	Score score = scoreObjective.getScore(victimPlayer.getName());
+		score.setScore(scoreRemaining);
     	
     	int yToRemove = chunkCoreY - scoreRemaining;
 		
