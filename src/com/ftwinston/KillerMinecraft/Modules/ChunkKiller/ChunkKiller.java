@@ -1,6 +1,7 @@
 package com.ftwinston.KillerMinecraft.Modules.ChunkKiller;
 
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.bukkit.Bukkit;
@@ -60,14 +61,11 @@ public class ChunkKiller extends GameMode
 	}
 	
 	@Override
-	public String getHelpMessage(int num, TeamInfo team)
+	public List<String> getHelpMessages(TeamInfo team)
 	{
-		switch ( num )
-		{
-			case 0:
-			default:
-				return null;
-		}
+		LinkedList<String> messages = new LinkedList<String>();
+
+		return messages;
 	}
 	
 	Objective scoreObjective;
