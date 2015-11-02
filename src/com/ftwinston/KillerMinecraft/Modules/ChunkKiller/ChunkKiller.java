@@ -64,7 +64,20 @@ public class ChunkKiller extends GameMode
 	public List<String> getHelpMessages(TeamInfo team)
 	{
 		LinkedList<String> messages = new LinkedList<String>();
-
+		messages.add("Each player has their own 'chunk' of terrain, and will respawn on it when they die.");
+		messages.add("Defend the emerald 'core' block at the top of your chunk from other players. Breaking a core block will remove layers of that chunk.");
+		
+		if (useSlaves.isEnabled())
+		{
+			messages.add("When your chunk is destroyed, you lose. You will become a slave to the player who destroyed your chunk.");
+			messages.add("Slaves cannot harm their master or their master's chunk, but can harm other players and their chunks.");
+			messages.add("If a slave misbehaves, their master can kill them with a single hit.");
+		}
+		else if (outlastYourOwnChunk.isEnabled())
+			messages.add("When your chunk is destroyed, you lose. You won't die immediately, though, so try and take your revenge.");
+		else
+			messages.add("When your chunk is destroyed, you lose, and will die immediately.");
+		
 		return messages;
 	}
 	
